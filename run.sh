@@ -1,0 +1,1 @@
+python convert_camchain_to_intri.py input output/240815-intri.yml --config ./config.yaml
