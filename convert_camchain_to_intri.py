@@ -10,7 +10,23 @@ def extract_cam_blocks_from_file(file_path):
         except Exception as e:
             print(f"⚠️ Skipping {file_path}, failed to parse YAML: {e}")
             return {}
-    return {k: v for k, v in data.items() if re.match(r'^cam\d+$', k)}
+
+    result = {}
+    for k, v in data.items():
+        # print(k)
+        if re.match(r'^cam\d+$', k):
+            # 尝试从 rostopic 中提取相机编号（如 /cam2/image_raw -> cam2）
+            rostopic = v.get("rostopic", "")
+            match = re.search(r"/(cam\d+)/", rostopic)
+            if match:
+                new_key = match.group(1)  # 提取 camX
+            else:
+                new_key = k  # fallback 到原始 camX
+
+            result[new_key] = v
+    # print(result)
+    return result
+
 
 def load_cam_name_mapping(config_path):
     if config_path is None:
@@ -29,6 +45,7 @@ def convert_camchain_to_opencv_yaml_auto_names(input_path, output_path, config_p
             if filename.endswith(".yaml") or filename.endswith(".yml"):
                 filepath = os.path.join(input_path, filename)
                 cam_blocks = extract_cam_blocks_from_file(filepath)
+                # print(cam_blocks)
                 all_cam_blocks.update(cam_blocks)
     else:
         all_cam_blocks = extract_cam_blocks_from_file(input_path)
